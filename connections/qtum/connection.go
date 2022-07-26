@@ -364,6 +364,9 @@ func (c *Connection) Send(params []byte) (ethcommon.Hash, error) {
 			},
 		},
 	}
+
+	fmt.Printf("send data: %+v", data) // todo to be removed
+
 	payloadBytes, err := json.Marshal(data)
 	if err != nil {
 		c.log.Error("json.Marshal error", err)

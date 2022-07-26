@@ -280,7 +280,14 @@ func TestConnection_Send(t *testing.T) {
 		return
 	}
 
-	input, _ := parsed.Pack("set", 3)
+	input, err := parsed.Pack("set", 3)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	fmt.Printf("head block number: %v, %v\n", input, ethcmn.Bytes2Hex(input))
+
 	hash, err := conn.Send(input)
 	if err != nil {
 		t.Fatal(err)
