@@ -9,6 +9,8 @@ import (
 	metrics "github.com/ChainSafe/chainbridge-utils/metrics/types"
 	"github.com/ChainSafe/chainbridge-utils/msg"
 	"github.com/ChainSafe/log15"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"strings"
 )
 
 var _ core.Writer = &writer{}
@@ -21,6 +23,7 @@ var CancelledStatus uint8 = 4
 type writer struct {
 	cfg            Config
 	conn           Connection
+	abi            abi.ABI
 	bridgeContract *Bridge.Bridge // instance of bound receiver bridgeContract
 	log            log15.Logger
 	stop           <-chan int
@@ -48,6 +51,12 @@ func (w *writer) start() error {
 // setContract adds the bound receiver bridgeContract to the writer
 func (w *writer) setContract(bridge *Bridge.Bridge) {
 	w.bridgeContract = bridge
+	parsed, err := abi.JSON(strings.NewReader(Bridge.BridgeABI))
+	if err != nil {
+		w.log.Error(err.Error())
+		return
+	}
+	w.abi = parsed
 }
 
 // ResolveMessage handles any given message based on type

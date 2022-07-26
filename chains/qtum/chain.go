@@ -22,6 +22,7 @@ package qtum
 
 import (
 	"fmt"
+	"github.com/ethereum/go-ethereum/rpc"
 	"math/big"
 
 	bridge "github.com/ChainSafe/ChainBridge/bindings/Bridge"
@@ -52,10 +53,12 @@ type Connection interface {
 	LockAndUpdateOpts() error
 	UnlockOpts()
 	Client() *ethclient.Client
+	RpcClient() *rpc.Client
 	EnsureHasBytecode(address common.Address) error
 	LatestBlock() (*big.Int, error)
 	WaitForBlock(block *big.Int, delay *big.Int) error
 	Close()
+	Send(method string, data []byte) error
 }
 
 type Chain struct {
@@ -106,7 +109,7 @@ func InitializeChain(chainCfg *core.ChainConfig, logger log15.Logger, sysErr cha
 	}
 
 	stop := make(chan int)
-	conn := connection.NewConnection(cfg.endpoint, cfg.http, chainCfg.From, logger, cfg.gasLimit, cfg.maxGasPrice, cfg.minGasPrice, cfg.gasMultiplier, cfg.egsApiKey, cfg.egsSpeed)
+	conn := connection.NewConnection(cfg.endpoint, cfg.http, chainCfg.From, cfg.bridgeContract, logger, cfg.gasLimit, cfg.maxGasPrice, cfg.minGasPrice, cfg.gasMultiplier, cfg.egsApiKey, cfg.egsSpeed)
 	err = conn.Connect()
 	if err != nil {
 		return nil, err
