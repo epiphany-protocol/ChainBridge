@@ -252,7 +252,6 @@ func TestConnection_EstimateGasLondonMin(t *testing.T) {
 	}
 }
 
-// todo: remove me.
 // 	• 调用set方法
 //		curl --header 'Content-Type: application/json' --data '{"id":"10","jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0x9735887ba7bff92e62f00b221dc6daf3d5218e6f","gas":"0x6691b7","gasPrice":"0x5d21dba000","to":"0x57f18debc2ec90e757616ccc279e43828dbb17ea","data":"60fe47b10000000000000000000000000000000000000000000000000000000000000002"}]}' 'localhost:23890'
 // Solidity: function voteProposal(uint8 chainID, uint64 depositNonce, bytes32 resourceID, bytes32 dataHash) returns()
@@ -286,7 +285,7 @@ func TestConnection_Send(t *testing.T) {
 		return
 	}
 
-	fmt.Printf("head block number: %v, %v\n", input, ethcmn.Bytes2Hex(input))
+	fmt.Printf("input: %v, %v\n", input, ethcmn.Bytes2Hex(input))
 
 	hash, err := conn.Send(input)
 	if err != nil {

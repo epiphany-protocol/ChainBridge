@@ -86,7 +86,7 @@ func (c *Connection) Connect() error {
 	}
 	c.opts = opts
 	c.nonce = 0
-	c.callOpts = &bind.CallOpts{From: ethcommon.HexToAddress(c.fromAddress)} // todo is this OK?
+	c.callOpts = &bind.CallOpts{From: ethcommon.HexToAddress(c.fromAddress)}
 	return nil
 }
 
@@ -113,7 +113,7 @@ func (c *Connection) newTransactOpts(value, gasLimit, gasPrice *big.Int) (*bind.
 }
 
 func (c *Connection) FromAddress() ethcommon.Address {
-	return ethcommon.HexToAddress(c.fromAddress) // todo is this OK?
+	return ethcommon.HexToAddress(c.fromAddress)
 }
 
 func (c *Connection) Client() *ethclient.Client {
