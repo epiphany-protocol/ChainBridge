@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/core/types"
 	"math/big"
 	"time"
 
@@ -249,9 +248,10 @@ func (w *writer) watchThenExecute(m msg.Message, data []byte, dataHash [32]byte,
 // 	• 调用set方法
 //		curl --header 'Content-Type: application/json' --data '{"id":"10","jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0x9735887ba7bff92e62f00b221dc6daf3d5218e6f","gas":"0x6691b7","gasPrice":"0x5d21dba000","to":"0x57f18debc2ec90e757616ccc279e43828dbb17ea","data":"60fe47b10000000000000000000000000000000000000000000000000000000000000002"}]}' 'localhost:23890'
 // Solidity: function voteProposal(uint8 chainID, uint64 depositNonce, bytes32 resourceID, bytes32 dataHash) returns()
-func (w *writer) VoteProposalQtum(opts *bind.TransactOpts, chainID uint8, depositNonce uint64, resourceID [32]byte, dataHash [32]byte) (*types.Transaction, error) {
+func (w *writer) VoteProposalQtum(opts *bind.TransactOpts, chainID uint8, depositNonce uint64, resourceID [32]byte, dataHash [32]byte) (string, error) {
 	input, _ := w.abi.Pack("voteProposal", chainID, depositNonce, resourceID, dataHash)
-	return nil, w.conn.Send("eth_sendTransaction", input)
+	hash, err := w.conn.Send(input)
+	return hash.String(), err
 }
 
 // voteProposal submits a vote proposal
@@ -274,7 +274,7 @@ func (w *writer) voteProposal(m msg.Message, dataHash [32]byte) {
 			gasLimit := w.conn.Opts().GasLimit
 			gasPrice := w.conn.Opts().GasPrice
 
-			tx, err := w.VoteProposalQtum( // todo modify this for no signer but setting from address
+			txhash, err := w.VoteProposalQtum( // todo modify this for no signer but setting from address
 				w.conn.Opts(),
 				uint8(m.Source),
 				uint64(m.DepositNonce),
@@ -284,7 +284,7 @@ func (w *writer) voteProposal(m msg.Message, dataHash [32]byte) {
 			w.conn.UnlockOpts()
 
 			if err == nil {
-				w.log.Info("Submitted proposal vote", "tx", tx.Hash(), "src", m.Source, "depositNonce", m.DepositNonce, "gasPrice", tx.GasPrice().String())
+				w.log.Info("Submitted proposal vote", "tx", txhash, "src", m.Source, "depositNonce", m.DepositNonce)
 				if w.metrics != nil {
 					w.metrics.VotesSubmitted.Inc()
 				}

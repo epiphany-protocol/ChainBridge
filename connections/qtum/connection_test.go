@@ -280,7 +280,7 @@ func TestConnection_Send(t *testing.T) {
 		return
 	}
 
-	input, err := parsed.Pack("set", big.NewInt(3))
+	input, err := parsed.Pack("set", big.NewInt(5))
 	if err != nil {
 		t.Fatal(err)
 		return

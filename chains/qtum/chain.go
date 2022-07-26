@@ -58,7 +58,7 @@ type Connection interface {
 	LatestBlock() (*big.Int, error)
 	WaitForBlock(block *big.Int, delay *big.Int) error
 	Close()
-	Send(method string, data []byte) error
+	Send(params []byte) (common.Hash, error)
 }
 
 type Chain struct {

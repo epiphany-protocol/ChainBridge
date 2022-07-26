@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"net/http"
 	"sync"
@@ -386,19 +385,26 @@ func (c *Connection) Send(params []byte) (ethcommon.Hash, error) {
 		c.log.Error("DefaultClient.Do error", err)
 		return ethcommon.Hash{}, err
 	}
-	defer resp.Body.Close()
-	respbody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		c.log.Error("ioutil.ReadAll(resp.Body) error", err)
-		return ethcommon.Hash{}, err
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		var buf bytes.Buffer
+		var body []byte
+		if _, err := buf.ReadFrom(resp.Body); err == nil {
+			body = buf.Bytes()
+		}
+		errmsg := fmt.Sprintf("status: %s, statusCode: %d", resp.Status, resp.StatusCode)
+		c.log.Error("DefaultClient.Do error", errmsg, body)
+		return ethcommon.Hash{}, errors.New(errmsg)
 	}
-	respdata := &Resp{}
-	err = json.Unmarshal(respbody, respdata)
+
+	defer resp.Body.Close()
+
+	respmsg := &Resp{}
+	err = json.NewDecoder(resp.Body).Decode(respmsg)
 	if err != nil {
 		c.log.Error("json.Unmarshal(respbody, respdata) error", err)
 		return ethcommon.Hash{}, err
 	}
 
-	return ethcommon.HexToHash(respdata.Result), nil
+	return ethcommon.HexToHash(respmsg.Result), nil
 }
 
