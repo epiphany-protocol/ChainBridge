@@ -19,7 +19,7 @@ import (
 )
 
 var TestEndpoint = "http://localhost:23889"
-var fromAddress = "0x0x9367aa1ac1bcb8729a6c1ece6ed1d97b9ba95d52"
+var fromAddress = "0x9367aa1ac1bcb8729a6c1ece6ed1d97b9ba95d52"
 var bridgeAddress = ethcmn.HexToAddress("0x75fd9971e8f8263f448f6e52b3fb81aaea6f4c9e")
 var AliceKp = keystore.TestKeyRing.EthereumKeys[keystore.AliceKey]
 var GasLimit = big.NewInt(ethutils.DefaultGasLimit)
@@ -280,7 +280,7 @@ func TestConnection_Send(t *testing.T) {
 		return
 	}
 
-	input, err := parsed.Pack("set", uint(3))
+	input, err := parsed.Pack("set", big.NewInt(3))
 	if err != nil {
 		t.Fatal(err)
 		return
