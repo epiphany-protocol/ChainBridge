@@ -53,6 +53,7 @@ func NewConnection(endpoint string, http bool, fromAddress string, bridgeAddress
 		endpoint:      endpoint,
 		http:          http,
 		fromAddress:   fromAddress,
+		bridgeAddress: bridgeAddress,
 		gasLimit:      gasLimit,
 		maxGasPrice:   maxGasPrice,
 		minGasPrice:   minGasPrice,
@@ -370,7 +371,7 @@ func (c *Connection) Send(params []byte) (ethcommon.Hash, error) {
 	}
 	body := bytes.NewReader(payloadBytes)
 
-	req, err := http.NewRequest("POST", "localhost:23890", body)
+	req, err := http.NewRequest("POST", c.endpoint, body)
 	if err != nil {
 		c.log.Error("NewRequest error", err)
 		return ethcommon.Hash{}, err
