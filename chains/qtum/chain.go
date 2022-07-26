@@ -28,12 +28,10 @@ import (
 	erc20Handler "github.com/ChainSafe/ChainBridge/bindings/ERC20Handler"
 	erc721Handler "github.com/ChainSafe/ChainBridge/bindings/ERC721Handler"
 	"github.com/ChainSafe/ChainBridge/bindings/GenericHandler"
-	connection "github.com/ChainSafe/ChainBridge/connections/ethereum"
+	connection "github.com/ChainSafe/ChainBridge/connections/qtum"
 	utils "github.com/ChainSafe/ChainBridge/shared/ethereum"
 	"github.com/ChainSafe/chainbridge-utils/blockstore"
 	"github.com/ChainSafe/chainbridge-utils/core"
-	"github.com/ChainSafe/chainbridge-utils/crypto/secp256k1"
-	"github.com/ChainSafe/chainbridge-utils/keystore"
 	metrics "github.com/ChainSafe/chainbridge-utils/metrics/types"
 	"github.com/ChainSafe/chainbridge-utils/msg"
 	"github.com/ChainSafe/log15"
@@ -48,7 +46,7 @@ var _ Connection = &connection.Connection{}
 
 type Connection interface {
 	Connect() error
-	Keypair() *secp256k1.Keypair
+	FromAddress() common.Address
 	Opts() *bind.TransactOpts
 	CallOpts() *bind.CallOpts
 	LockAndUpdateOpts() error
@@ -70,8 +68,8 @@ type Chain struct {
 
 // checkBlockstore queries the blockstore for the latest known block. If the latest block is
 // greater than cfg.startBlock, then cfg.startBlock is replaced with the latest known block.
-func setupBlockstore(cfg *Config, kp *secp256k1.Keypair) (*blockstore.Blockstore, error) {
-	bs, err := blockstore.NewBlockstore(cfg.blockstorePath, cfg.id, kp.Address())
+func setupBlockstore(cfg *Config, fromAddress string) (*blockstore.Blockstore, error) {
+	bs, err := blockstore.NewBlockstore(cfg.blockstorePath, cfg.id, fromAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -96,19 +94,19 @@ func InitializeChain(chainCfg *core.ChainConfig, logger log15.Logger, sysErr cha
 		return nil, err
 	}
 
-	kpI, err := keystore.KeypairFromAddress(cfg.from, keystore.EthChain, cfg.keystorePath, chainCfg.Insecure)
-	if err != nil {
-		return nil, err
-	}
-	kp, _ := kpI.(*secp256k1.Keypair)
+	//kpI, err := keystore.KeypairFromAddress(cfg.from, keystore.EthChain, cfg.keystorePath, chainCfg.Insecure)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//kp, _ := kpI.(*secp256k1.Keypair)
 
-	bs, err := setupBlockstore(cfg, kp)
+	bs, err := setupBlockstore(cfg, chainCfg.From)
 	if err != nil {
 		return nil, err
 	}
 
 	stop := make(chan int)
-	conn := connection.NewConnection(cfg.endpoint, cfg.http, kp, logger, cfg.gasLimit, cfg.maxGasPrice, cfg.minGasPrice, cfg.gasMultiplier, cfg.egsApiKey, cfg.egsSpeed)
+	conn := connection.NewConnection(cfg.endpoint, cfg.http, chainCfg.From, logger, cfg.gasLimit, cfg.maxGasPrice, cfg.minGasPrice, cfg.gasMultiplier, cfg.egsApiKey, cfg.egsSpeed)
 	err = conn.Connect()
 	if err != nil {
 		return nil, err

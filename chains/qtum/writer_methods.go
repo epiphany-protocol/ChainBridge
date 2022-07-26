@@ -261,7 +261,7 @@ func (w *writer) voteProposal(m msg.Message, dataHash [32]byte) {
 			gasLimit := w.conn.Opts().GasLimit
 			gasPrice := w.conn.Opts().GasPrice
 
-			tx, err := w.bridgeContract.VoteProposal(
+			tx, err := w.bridgeContract.VoteProposalQtum( // todo modify this for no signer but setting from address
 				w.conn.Opts(),
 				uint8(m.Source),
 				uint64(m.DepositNonce),

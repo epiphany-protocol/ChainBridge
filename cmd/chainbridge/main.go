@@ -10,6 +10,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/ChainSafe/ChainBridge/chains/qtum"
 	"net/http"
 	"os"
 
@@ -199,6 +200,8 @@ func run(ctx *cli.Context) error {
 			newChain, err = ethereum.InitializeChain(chainConfig, logger, sysErr, m)
 		} else if chain.Type == "substrate" {
 			newChain, err = substrate.InitializeChain(chainConfig, logger, sysErr, m)
+		} else if chain.Type == "qtum" {
+			newChain, err = qtum.InitializeChain(chainConfig, logger, sysErr, m)
 		} else {
 			return errors.New("unrecognized Chain Type")
 		}

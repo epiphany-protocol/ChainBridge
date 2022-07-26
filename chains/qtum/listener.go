@@ -174,7 +174,7 @@ func (l *listener) getDepositEventsForBlock(latestBlock *big.Int) error {
 		rId := msg.ResourceIdFromSlice(log.Topics[2].Bytes())
 		nonce := msg.Nonce(log.Topics[3].Big().Uint64())
 
-		addr, err := l.bridgeContract.ResourceIDToHandlerAddress(&bind.CallOpts{From: l.conn.Keypair().CommonAddress()}, rId)
+		addr, err := l.bridgeContract.ResourceIDToHandlerAddress(&bind.CallOpts{From: l.conn.FromAddress()}, rId)
 		if err != nil {
 			return fmt.Errorf("failed to get handler from resource ID %x", rId)
 		}
