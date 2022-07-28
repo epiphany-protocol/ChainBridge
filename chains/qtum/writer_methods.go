@@ -244,9 +244,6 @@ func (w *writer) watchThenExecute(m msg.Message, data []byte, dataHash [32]byte,
 
 // VoteProposalQtum is a paid mutator transaction binding the contract method 0x1ff013f1 for qtum chain.
 //
-// todo: remove me.
-// 	• 调用set方法
-//		curl --header 'Content-Type: application/json' --data '{"id":"10","jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"from":"0x9735887ba7bff92e62f00b221dc6daf3d5218e6f","gas":"0x6691b7","gasPrice":"0x5d21dba000","to":"0x57f18debc2ec90e757616ccc279e43828dbb17ea","data":"60fe47b10000000000000000000000000000000000000000000000000000000000000002"}]}' 'localhost:23890'
 // Solidity: function voteProposal(uint8 chainID, uint64 depositNonce, bytes32 resourceID, bytes32 dataHash) returns()
 func (w *writer) VoteProposalQtum(opts *bind.TransactOpts, chainID uint8, depositNonce uint64, resourceID [32]byte, dataHash [32]byte) (string, error) {
 	input, _ := w.abi.Pack("voteProposal", chainID, depositNonce, resourceID, dataHash)
@@ -274,7 +271,7 @@ func (w *writer) voteProposal(m msg.Message, dataHash [32]byte) {
 			gasLimit := w.conn.Opts().GasLimit
 			gasPrice := w.conn.Opts().GasPrice
 
-			txhash, err := w.VoteProposalQtum( // todo modify this for no signer but setting from address
+			txhash, err := w.VoteProposalQtum(
 				w.conn.Opts(),
 				uint8(m.Source),
 				uint64(m.DepositNonce),
@@ -308,6 +305,15 @@ func (w *writer) voteProposal(m msg.Message, dataHash [32]byte) {
 	w.sysErr <- ErrFatalTx
 }
 
+// ExecuteProposalQtum is a paid mutator transaction binding the contract method 0x4454b20d.
+//
+// Solidity: function executeProposal(uint8 chainID, uint64 depositNonce, bytes data, bytes32 resourceID) returns()
+func (w *writer) ExecuteProposalQtum(opts *bind.TransactOpts, chainID uint8, depositNonce uint64, data []byte, resourceID [32]byte) (string, error) {
+	input, _ := w.abi.Pack("executeProposal", chainID, depositNonce, data, resourceID)
+	hash, err := w.conn.Send(input)
+	return hash.String(), err
+}
+
 // executeProposal executes the proposal
 func (w *writer) executeProposal(m msg.Message, data []byte, dataHash [32]byte) {
 	for i := 0; i < TxRetryLimit; i++ {
@@ -325,7 +331,7 @@ func (w *writer) executeProposal(m msg.Message, data []byte, dataHash [32]byte) 
 			gasLimit := w.conn.Opts().GasLimit
 			gasPrice := w.conn.Opts().GasPrice
 
-			tx, err := w.bridgeContract.ExecuteProposal(
+			txhash, err := w.ExecuteProposalQtum(
 				w.conn.Opts(),
 				uint8(m.Source),
 				uint64(m.DepositNonce),
@@ -335,7 +341,7 @@ func (w *writer) executeProposal(m msg.Message, data []byte, dataHash [32]byte) 
 			w.conn.UnlockOpts()
 
 			if err == nil {
-				w.log.Info("Submitted proposal execution", "tx", tx.Hash(), "src", m.Source, "dst", m.Destination, "nonce", m.DepositNonce, "gasPrice", tx.GasPrice().String())
+				w.log.Info("Submitted proposal execution", "tx", txhash, "src", m.Source, "dst", m.Destination, "nonce", m.DepositNonce)
 				return
 			} else if err.Error() == ErrNonceTooLow.Error() || err.Error() == ErrTxUnderpriced.Error() {
 				w.log.Error("Nonce too low, will retry")
