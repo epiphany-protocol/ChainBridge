@@ -107,6 +107,21 @@ func TestListener_start_stop(t *testing.T) {
 	close(stop)
 }
 
+func TestListener_start_stop2(t *testing.T) {
+	contracts := deployedTestContracts()
+	stop := make(chan int)
+	//QtumTestConfig.http = true
+	l, _ := createTestListener(t, QtumTestConfig, contracts, stop, nil)
+
+	err := l.start()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Initiate shutdown
+	close(stop)
+}
+
 func TestListener_Erc20DepositedEvent(t *testing.T) {
 	client := ethtest.NewClient(t, TestEndpoint, AliceKp)
 	contracts := deployTestContracts(t, client, aliceTestConfig.id)

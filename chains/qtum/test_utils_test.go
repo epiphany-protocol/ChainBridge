@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/ChainSafe/ChainBridge/bindings/Bridge"
-	connection "github.com/ChainSafe/ChainBridge/connections/ethereum"
+	connection "github.com/ChainSafe/ChainBridge/connections/qtum"
 	utils "github.com/ChainSafe/ChainBridge/shared/ethereum"
 	"github.com/ChainSafe/chainbridge-utils/keystore"
 	"github.com/ChainSafe/chainbridge-utils/msg"
@@ -18,7 +18,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-const TestEndpoint = "ws://localhost:8545"
+const TestEndpoint = "ws://localhost:23889"
+const depositBlock = 2120340
+const fromAddress = "0x9367aa1ac1bcb8729a6c1ece6ed1d97b9ba95d52"
+const bridgeAddress = "0xe209452adeac497640bb6f6a336495dc9aed0df5"
+const erc20HandlerAddress = "0xe327e3caad96ea7bf97cd6d1a57de048d17e1bb2"
+const erc20Address = "0x518fada420be9429180613c43bcacd2206d154ce"
+const resourceId = "0x0000000000000000000000518fada420be9429180613c43bcacd2206d154ce01"
+const depositTopic = "0xdbb69440df8433824a026ef190652f29929eb64b4d1d5d2a69be8afe3e6eaed8"
 
 var TestLogger = newTestLogger("test")
 var TestTimeout = time.Second * 30
@@ -30,6 +37,8 @@ var TestRelayerThreshold = big.NewInt(2)
 var TestChainId = msg.ChainId(0)
 
 var aliceTestConfig = createConfig("alice", nil, nil)
+
+var QtumTestConfig =  createConfig(fromAddress, big.NewInt(depositBlock), nil)
 
 func createConfig(name string, startBlock *big.Int, contracts *utils.DeployedContracts) *Config {
 	cfg := &Config{
@@ -69,8 +78,7 @@ func newTestLogger(name string) log15.Logger {
 }
 
 func newLocalConnection(t *testing.T, cfg *Config) *connection.Connection {
-	kp := keystore.TestKeyRing.EthereumKeys[cfg.from]
-	conn := connection.NewConnection(TestEndpoint, false, kp, TestLogger, big.NewInt(DefaultGasLimit), big.NewInt(DefaultGasPrice), big.NewInt(DefaultMinGasPrice), big.NewFloat(DefaultGasMultiplier), "", "")
+	conn := connection.NewConnection(TestEndpoint, false, fromAddress, cfg.bridgeContract, TestLogger, big.NewInt(DefaultGasLimit), big.NewInt(DefaultGasPrice), big.NewInt(DefaultMinGasPrice), big.NewFloat(DefaultGasMultiplier), "", "")
 	err := conn.Connect()
 	if err != nil {
 		t.Fatal(err)
@@ -97,6 +105,13 @@ func deployTestContracts(t *testing.T, client *utils.Client, id msg.ChainId) *ut
 	fmt.Println("========================================================")
 
 	return contracts
+}
+
+func deployedTestContracts() *utils.DeployedContracts {
+	return &utils.DeployedContracts{
+		BridgeAddress: common.HexToAddress(bridgeAddress),
+		ERC20HandlerAddress: common.HexToAddress(erc20HandlerAddress),
+	}
 }
 
 func createErc20Deposit(

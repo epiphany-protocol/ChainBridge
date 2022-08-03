@@ -23,9 +23,9 @@ import (
 func createWriters(t *testing.T, client *utils.Client, contracts *utils.DeployedContracts) (*writer, *writer, func(), func(), chan error, chan error) {
 	latestBlock := ethtest.GetLatestBlock(t, client)
 	errA := make(chan error)
-	writerA, stopA := createTestWriter(t, createConfig("bob", latestBlock, contracts), errA)
+	writerA, stopA := createTestWriter(t, createConfig(fromAddress, latestBlock, contracts), errA)
 	errB := make(chan error)
-	writerB, stopB := createTestWriter(t, createConfig("charlie", latestBlock, contracts), errB)
+	writerB, stopB := createTestWriter(t, createConfig(fromAddress, latestBlock, contracts), errB)
 	return writerA, writerB, stopA, stopB, errA, errB
 }
 
@@ -75,10 +75,10 @@ func routeMessageAndWait(t *testing.T, client *utils.Client, alice, bob *writer,
 		t.Fatal("Alice failed to resolve the message")
 	}
 
-	// Now Bob receives the same message and also waits to execute
-	if ok := bob.ResolveMessage(m); !ok {
-		t.Fatal("Bob failed to resolve the message")
-	}
+	//// Now Bob receives the same message and also waits to execute
+	//if ok := bob.ResolveMessage(m); !ok {
+	//	t.Fatal("Bob failed to resolve the message")
+	//}
 
 	for {
 		select {
@@ -146,6 +146,31 @@ func TestCreateAndExecuteErc20DepositProposal(t *testing.T) {
 	go ethtest.WatchEvent(client, contracts.BridgeAddress, utils.ProposalVote)
 
 	routeMessageAndWait(t, client, writerA, writerB, m, errA, errB)
+
+	ethtest.Erc20AssertBalance(t, client, amount, erc20Address, recipient)
+}
+
+func TestCreateAndExecuteErc20DepositProposalQtum(t *testing.T) {
+	client := ethtest.NewClient(t, TestEndpoint, AliceKp)
+	contracts := deployedTestContracts()
+	writerA, writerB, stopA, stopB, errA, errB := createWriters(t, client, contracts)
+
+	defer stopA()
+	defer stopB()
+	defer writerA.conn.Close()
+	defer writerB.conn.Close()
+	erc20Address := common.HexToAddress(erc20Address)
+
+	// Create initial transfer message
+	resourceId := msg.ResourceIdFromSlice(common.FromHex(resourceId))
+	recipient := common.HexToAddress(fromAddress)
+	amount := big.NewInt(10)
+	m := msg.NewFungibleTransfer(1, 0, 2, amount, resourceId, recipient.Bytes())
+	// Helpful for debugging
+	go ethtest.WatchEvent(client, contracts.BridgeAddress, utils.ProposalEvent)
+	go ethtest.WatchEvent(client, contracts.BridgeAddress, utils.ProposalVote)
+
+	routeMessageAndWait(t, client, writerA, writerB, m, errA, errB) // core test
 
 	ethtest.Erc20AssertBalance(t, client, amount, erc20Address, recipient)
 }
@@ -254,11 +279,11 @@ func TestDuplicateMessage(t *testing.T) {
 	ethtest.Erc20AssertBalance(t, client, amount, erc20Address, recipient)
 
 	// Capture nonces
-	nonceAPre, err := writerA.conn.Client().PendingNonceAt(context.Background(), writerA.conn.Keypair().CommonAddress())
+	nonceAPre, err := writerA.conn.Client().PendingNonceAt(context.Background(), writerA.conn.FromAddress())
 	if err != nil {
 		t.Fatal(err)
 	}
-	nonceBPre, err := writerA.conn.Client().PendingNonceAt(context.Background(), writerB.conn.Keypair().CommonAddress())
+	nonceBPre, err := writerA.conn.Client().PendingNonceAt(context.Background(), writerB.conn.FromAddress())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,11 +305,11 @@ func TestDuplicateMessage(t *testing.T) {
 	}
 
 	// Capture new nonces
-	nonceAPost, err := writerA.conn.Client().PendingNonceAt(context.Background(), writerA.conn.Keypair().CommonAddress())
+	nonceAPost, err := writerA.conn.Client().PendingNonceAt(context.Background(), writerA.conn.FromAddress())
 	if err != nil {
 		t.Fatal(err)
 	}
-	nonceBPost, err := writerA.conn.Client().PendingNonceAt(context.Background(), writerB.conn.Keypair().CommonAddress())
+	nonceBPost, err := writerA.conn.Client().PendingNonceAt(context.Background(), writerB.conn.FromAddress())
 	if err != nil {
 		t.Fatal(err)
 	}
